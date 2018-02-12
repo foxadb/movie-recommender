@@ -21,14 +21,21 @@ std::string Parser::toString() {
         result += rating->toString();
         result += "\n";
     }
+    result += "Users: " + std::to_string(this->userNb)
+            + "\nMovies: " + std::to_string(this->movieNb);
     return result;
 }
 
 void Parser::readCsv() {
+    // Open CSV file
     std::ifstream file(this->filename);
     std::string line;
 
-    // Skip first line
+    // Initialize user and movie counters
+    this->userNb = 0;
+    this->movieNb = 0;
+
+    // Skip first line (header)
     std::getline(file, line);
 
     while(std::getline(file, line)) {
@@ -37,17 +44,27 @@ void Parser::readCsv() {
 
         Rating *rating = new Rating();
 
-        // User ID (start from 0)
+        // User id
         std::getline(ss, value, this->delimiter);
-        rating->setUser(atoi(value.c_str()) - 1);
+        rating->setUser(atoi(value.c_str()));
 
-        // Movie ID (start from 0)
+        // Movie id
         std::getline(ss, value, this->delimiter);
-        rating->setMovie(atoi(value.c_str()) - 1);
+        rating->setMovie(atoi(value.c_str()));
 
         // Mark
         std::getline(ss, value, this->delimiter);
         rating->setMark(atof(value.c_str()));
+
+        // Compute max user id
+        if (this->userNb < rating->getUser()) {
+            this->userNb++;
+        }
+
+        // Compute max movie id
+        if (this->movieNb < rating->getMovie()) {
+            this->movieNb++;
+        }
 
         // Push rating to data
         this->ratings.push_back(rating);

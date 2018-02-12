@@ -10,6 +10,7 @@ int main(int argc, char *argv[]) {
     // Read CSV file
     parser->readCsv();
 
+    // Print CSV
     std::cout << parser->toString() << std::endl;
 
     // Free memory
