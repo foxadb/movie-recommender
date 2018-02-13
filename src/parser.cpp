@@ -12,12 +12,23 @@ Parser::Parser(char *filename, char delimiter) {
 }
 
 Parser::~Parser() {
+    for (Rating *rating: this->ratings) {
+        delete rating;
+    }
     this->ratings.clear();
+}
+
+size_t Parser::getUserNb() {
+    return this->userNb;
+}
+
+size_t Parser::getMovieNb() {
+    return this->movieNb;
 }
 
 std::string Parser::toString() {
     std::string result;
-    for(Rating* rating: this->ratings) {
+    for (Rating* rating: this->ratings) {
         result += rating->toString();
         result += "\n";
     }
@@ -38,7 +49,7 @@ void Parser::readCsv() {
     // Skip first line (header)
     std::getline(file, line);
 
-    while(std::getline(file, line)) {
+    while (std::getline(file, line)) {
         std::stringstream ss(line);
         std::string value;
 
@@ -72,4 +83,18 @@ void Parser::readCsv() {
 
     // Close the input file
     file.close();
+}
+
+double** Parser::ratingsMatrix() {
+    double **ratings = new double*[this->userNb];
+    for (size_t i = 0; i < this->userNb; ++i) {
+        ratings[i] = new double[this->movieNb];
+    }
+
+    // Populate the matrix with ratings
+    for (Rating *r: this->ratings) {
+        ratings[r->getUser() - 1][r->getMovie() - 1] = r->getMark();
+    }
+
+    return ratings;
 }

@@ -12,9 +12,12 @@ public:
     Parser(char *filename, char delimiter);
     ~Parser();
 
+    size_t getUserNb();
+    size_t getMovieNb();
     std::string toString();
 
     void readCsv();
+    double** ratingsMatrix();
 
 private:
     char *filename;
