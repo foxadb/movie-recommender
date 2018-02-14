@@ -26,6 +26,10 @@ size_t Parser::getMovieNb() {
     return this->movieNb;
 }
 
+std::vector<Rating*> Parser::getRatings() {
+    return this->ratings;
+}
+
 std::string Parser::toString() {
     std::string result;
     for (Rating* rating: this->ratings) {

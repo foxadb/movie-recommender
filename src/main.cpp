@@ -1,39 +1,45 @@
 #include "parser.hpp"
 #include "rating.hpp"
+#include "predictor.hpp"
 
 #include <iostream>
 
 int main(int argc, char *argv[]) {
+    // Read arguments
+    char *filename = argv[1];
+    size_t K = atoi(argv[2]);
+    double alpha = atof(argv[3]);
+    double beta = atof(argv[4]);
+    size_t steps = atoi(argv[5]);
+
     // Parser initialization
-    Parser *parser = new Parser(argv[1], ',');
+    Parser *parser = new Parser(filename, ',');
 
     // Read CSV file
     parser->readCsv();
 
-    // User and Movie numbers
-    size_t userNb = parser->getUserNb();
-    size_t movieNb = parser->getMovieNb();
-
-    // Print CSV
-    std::cout << parser->toString() << std::endl;
-
     // Ratings matrix
-    double** ratings = parser->ratingsMatrix();
+    Predictor *predictor = new Predictor(
+                parser->ratingsMatrix(),
+                parser->getUserNb(),
+                parser->getMovieNb()
+                );
 
-    for (size_t i = 0; i < userNb; ++i) {
-        for (size_t j = 0; j < movieNb; ++j) {
-            std::cout << std::to_string(ratings[i][j]) + " ";
-        }
-        std::cout << std::endl;
+    // Prediction matrix
+    predictor->predictionMatrix(K, alpha, beta, steps);
+
+    // Test predictions
+    for (Rating *rating: parser->getRatings()) {
+        std::cout << "Rating: " << rating->toString() << std::endl;
+        std::cout << "predicted: "
+                  << predictor->predict(
+                         rating->getUser() - 1, rating->getMovie() - 1)
+                  << std::endl;
     }
 
     // Free memory
     delete parser;
-
-    for (int i = 0; i < userNb; ++i) {
-        delete [] ratings[i];
-    }
-    delete [] ratings;
+    delete predictor;
 
     // Exit success
     return 0;
