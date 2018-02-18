@@ -18,22 +18,25 @@ int main(int argc, char *argv[]) {
     // Read CSV file
     parser->readCsv();
 
+    // Split train test ratings
+    parser->splitTrainTestRatings(0.7);
+
     // Ratings matrix
     Predictor *predictor = new Predictor(
-                parser->ratingsMatrix(),
-                parser->getUserNb(),
-                parser->getMovieNb()
-                );
+                            parser->ratingsMatrix(),
+                            parser->getUserNb(),
+                            parser->getMovieNb()
+                            );
 
     // Prediction matrix
     predictor->predictionMatrix(K, alpha, beta, steps);
 
     // Test predictions
-    for (Rating *rating: parser->getRatings()) {
-        std::cout << "Rating: " << rating->toString() << std::endl;
-        std::cout << "predicted: "
-                  << predictor->predict(
-                         rating->getUser() - 1, rating->getMovie() - 1)
+    for (Rating *rating: parser->getTestRatings()) {
+        std::cout << "Rating: " << rating->toString()
+                  << "\t real: " << rating->getMark()
+                  << "\t predicted: " << predictor->predict(
+                             rating->getUser() - 1, rating->getMovie() - 1)
                   << std::endl;
     }
 
