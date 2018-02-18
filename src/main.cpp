@@ -16,9 +16,11 @@ int main(int argc, char *argv[]) {
     Parser *parser = new Parser(filename, ',');
 
     // Read CSV file
+    std::cout << "Parsing data file: " << filename << std::endl;
     parser->readCsv();
 
     // Split train test ratings
+    std::cout << "Split training/testing datasets" << std::endl;
     parser->splitTrainTestRatings(0.7);
 
     // Ratings matrix
@@ -29,12 +31,14 @@ int main(int argc, char *argv[]) {
                             );
 
     // Prediction matrix
+    std::cout << "Matrix factorization" << std::endl;
     predictor->predictionMatrix(K, alpha, beta, steps);
 
     // Test predictions
+    std::cout << "===== Test predictions =====" << std::endl;
     for (Rating *rating: parser->getTestRatings()) {
         std::cout << "Rating: " << rating->toString()
-                  << "\t real: " << rating->getMark()
+                  << "\t expected: " << rating->getMark()
                   << "\t predicted: " << predictor->predict(
                              rating->getUser() - 1, rating->getMovie() - 1)
                   << std::endl;

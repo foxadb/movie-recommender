@@ -23,6 +23,13 @@ make
 
 ### Run
 
+Run the recommender on the ratings dataset:
 ```
 ./src/recommender ../data/ratings.csv 2 0.0002 0.02 5000
 ```
+
+For fast test use ``small.csv`` file:
+```
+./src/recommender ../data/small.csv 2 0.0002 0.02 5000000
+```
+

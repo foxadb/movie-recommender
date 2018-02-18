@@ -9,6 +9,8 @@ public:
     Predictor(double** ratings, size_t userNb, size_t movieNb);
     ~Predictor();
 
+    double** genRandomMatrix(size_t n, size_t m);
+
     void matrixFactorization(
             double **P, double **Q,
             size_t K, double alpha, double beta, size_t steps);

@@ -17,6 +17,24 @@ Predictor::~Predictor() {
     delete [] this->predictions;
 }
 
+double** Predictor::genRandomMatrix(size_t n, size_t m) {
+    // Matrix allocation
+    double **mat = new double*[n];
+    for (size_t i = 0; i < n; ++i) {
+        mat[i] = new double[m];
+    }
+
+    // Fill matrix with random values
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < m; ++j) {
+            mat[i][j] = (double)rand() / RAND_MAX;
+        }
+    }
+
+    // Return the matrix
+    return mat;
+}
+
 void Predictor::matrixFactorization(
         double **P, double **Q,
         size_t K, double alpha, double beta, size_t steps) {
@@ -32,8 +50,8 @@ void Predictor::matrixFactorization(
                     double eij = this->ratings[i][j] - dotProd;
 
                     for (size_t k = 0; k < K; ++k) {
-                        P[i][k] = P[i][k] + alpha * (2 * eij * Q[k][j] - beta * P[i][k]);
-                        Q[k][j] = Q[k][j] + alpha * (2 * eij * P[i][k] - beta * Q[k][j]);
+                        P[i][k] += alpha * (2 * eij * Q[k][j] - beta * P[i][k]);
+                        Q[k][j] += alpha * (2 * eij * P[i][k] - beta * Q[k][j]);
                     }
                 }
             }
@@ -42,17 +60,9 @@ void Predictor::matrixFactorization(
 }
 
 void Predictor::predictionMatrix(size_t K, double alpha, double beta, size_t steps) {
-    // Initialize P
-    double **P = new double*[this->userNb];
-    for (size_t i = 0; i < this->userNb; ++i) {
-        P[i] = new double[K];
-    }
-
-    // Initialize Q
-    double **Q = new double*[K];
-    for (size_t i = 0; i < K; ++i) {
-        Q[i] = new double[this->movieNb];
-    }
+    // Initialize P and Q
+    double **P = this->genRandomMatrix(this->userNb, K);
+    double **Q = this->genRandomMatrix(K, this->movieNb);
 
     // Matrix factorization
     this->matrixFactorization(P, Q, K, alpha, beta, steps);
