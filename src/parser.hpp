@@ -2,6 +2,7 @@
 #define PARSER_HPP
 
 #include "rating.hpp"
+#include "predictor.hpp"
 
 #include <string>
 #include <vector>
@@ -22,6 +23,8 @@ public:
     void readCsv();
     void splitTrainTestRatings(double ratio);
     double** ratingsMatrix();
+
+    void writeResultsFile(const char *filename, Predictor *predictor);
 
 private:
     char *filename;
