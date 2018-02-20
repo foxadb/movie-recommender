@@ -157,5 +157,53 @@ double** Parser::ratingsMatrix() {
         ratings[r->getUser() - 1][r->getMovie() - 1] = r->getMark();
     }
 
+    // Return ratings matrix
     return ratings;
+}
+
+void Parser::writeResultsFile(const char *filename, Predictor *predictor) {
+    // Open output file
+    std::ofstream file(filename, std::ofstream::out | std::ofstream::trunc);
+
+    // Initialize result stats
+    size_t totalResults = 0;
+    size_t goodResults = 0;
+    double disparity = 0;
+
+    // Iterate through test ratings
+    for (Rating *rating: this->testRatings) {
+        // Compute prediction
+        double expected = rating->getMark();
+        double predicted = predictor->predict(
+                    rating->getUser() - 1, rating->getMovie() - 1);
+
+        // Increase counters
+        ++totalResults;
+        if (std::abs(predicted - expected) < 0.25) {
+            ++goodResults;
+        }
+
+        // Prediction disparity
+        disparity += std::abs(predicted - expected);
+
+        // Write rating result
+        std::string result = rating->toString()
+                + "\t expected: " + std::to_string(expected)
+                + "\t predicted: " + std::to_string(predicted)
+                + "\n";
+        file << result;
+    }
+
+    // Close output file
+    file.close();
+
+    // Average prediction disparity
+    disparity /= totalResults;
+
+    // Print good results ratio
+    std::cout << "Total results: " << totalResults << std::endl
+              << "Good results (+- 0.25): " << goodResults
+              << " (" << (double)(goodResults) / totalResults * 100 << " %)" << std::endl
+              << "Average disparity: " << disparity
+              << std::endl;
 }
