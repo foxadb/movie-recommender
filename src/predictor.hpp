@@ -15,6 +15,8 @@ public:
             double **P, double **Q,
             size_t K, double alpha, double beta, size_t steps);
 
+    double convergenceError(double **P, double **Q, size_t K, double beta);
+
     void predictionMatrix(size_t K, double alpha, double beta, size_t steps);
 
     double predict(size_t user, size_t movie);
