@@ -1,6 +1,7 @@
 #include "predictor.hpp"
 
 #include <iostream>
+#include <cmath>
 
 Predictor::Predictor(double **ratings, size_t userNb, size_t movieNb) {
     this->ratings = ratings;
@@ -56,7 +57,39 @@ void Predictor::matrixFactorization(
                 }
             }
         }
+
+        // Compute convergence error
+        /*double error = this->convergenceError(P, Q, K, beta);
+        if (error < 0.001) {
+            break;
+        }*/
     }
+}
+
+double Predictor::convergenceError(double **P, double **Q, size_t K, double beta) {
+    // Error initialization
+    double error = 0;
+
+    for (size_t i = 0; i < this->userNb; ++i) {
+        for (size_t j = 0; j < this->movieNb; ++j) {
+            if (this->ratings[i][j]) {
+                // error += |R - PQ|^2
+                double dotProd = 0;
+                for (size_t k = 0; k < K; ++k) {
+                    dotProd += P[i][k] * Q[k][j];
+                }
+                error += std::pow(this->ratings[i][j] - dotProd, 2);
+
+                // error += ||P||^2 + ||Q||^2
+                for (size_t k = 0; k < K; ++k) {
+                    error += beta / 2 * (std::pow(P[i][k], 2) + std::pow(Q[k][j], 2));
+                }
+            }
+        }
+    }
+
+    // Return error value
+    return error;
 }
 
 void Predictor::predictionMatrix(size_t K, double alpha, double beta, size_t steps) {
