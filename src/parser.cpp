@@ -5,6 +5,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <cmath>
 
 Parser::Parser(char *filename, char delimiter) {
     this->filename = filename;

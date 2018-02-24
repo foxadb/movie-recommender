@@ -57,13 +57,19 @@ void Predictor::matrixFactorization(
                 }
             }
         }
-
         // Compute convergence error
         /*double error = this->convergenceError(P, Q, K, beta);
-        if (error < 0.001) {
+        if (error < 0.01) {
+            std::cout << "Stoped at step: " << step << std::endl;
+            std::cout << "Convergence error: " << error << std::endl;
             break;
         }*/
     }
+
+    // Display the convergence error
+    std::cout << "Convergence error: "
+              << this->convergenceError(P, Q, K, beta)
+              << std::endl;
 }
 
 double Predictor::convergenceError(double **P, double **Q, size_t K, double beta) {
