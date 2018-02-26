@@ -6,24 +6,26 @@
 class Predictor {
 
 public:
-    Predictor(double** ratings, size_t userNb, size_t movieNb);
+    Predictor(double** ratings, size_t ratingNb, size_t userNb, size_t movieNb);
     ~Predictor();
 
     double** genRandomMatrix(size_t n, size_t m);
 
     void matrixFactorization(
-            double **P, double **Q,
-            size_t K, double alpha, double beta, size_t steps);
+            double **U, double **V,
+            size_t K, double eta, double lambda, size_t steps);
 
-    double convergenceError(double **P, double **Q, size_t K, double beta);
+    double meanAbsoluteError(double **U, double **V, size_t K);
 
-    void predictionMatrix(size_t K, double alpha, double beta, size_t steps);
+    void predictionMatrix(size_t K, double eta, double lambda, size_t steps);
 
     double predict(size_t user, size_t movie);
 
 private:
     double** ratings;
     double** predictions;
+
+    size_t ratingNb;
     size_t userNb;
     size_t movieNb;
 };
