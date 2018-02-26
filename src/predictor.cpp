@@ -3,8 +3,9 @@
 #include <iostream>
 #include <cmath>
 
-Predictor::Predictor(double **ratings, size_t userNb, size_t movieNb) {
+Predictor::Predictor(double **ratings, size_t ratingNb, size_t userNb, size_t movieNb) {
     this->ratings = ratings;
+    this->ratingNb = ratingNb;
     this->userNb = userNb;
     this->movieNb = movieNb;
 }
@@ -28,7 +29,7 @@ double** Predictor::genRandomMatrix(size_t n, size_t m) {
     // Fill matrix with random values
     for (size_t i = 0; i < n; ++i) {
         for (size_t j = 0; j < m; ++j) {
-            mat[i][j] = (double)rand() / RAND_MAX;
+            mat[i][j] = (double)rand() / RAND_MAX * 5;
         }
     }
 
@@ -37,8 +38,8 @@ double** Predictor::genRandomMatrix(size_t n, size_t m) {
 }
 
 void Predictor::matrixFactorization(
-        double **P, double **Q,
-        size_t K, double alpha, double beta, size_t steps) {
+        double **U, double **V,
+        size_t K, double eta, double lambda, size_t steps) {
     // Iterate throw steps
     for (size_t step = 0; step < steps; ++step) {
         for (size_t i = 0; i < this->userNb; ++i) {
@@ -46,63 +47,51 @@ void Predictor::matrixFactorization(
                 if (this->ratings[i][j] > 0) {
                     double dotProd = 0;
                     for (size_t k = 0; k < K; ++k) {
-                        dotProd += P[i][k] * Q[k][j];
+                        dotProd += U[i][k] * V[k][j];
                     }
                     double eij = this->ratings[i][j] - dotProd;
 
                     for (size_t k = 0; k < K; ++k) {
-                        P[i][k] += alpha * (2 * eij * Q[k][j] - beta * P[i][k]);
-                        Q[k][j] += alpha * (2 * eij * P[i][k] - beta * Q[k][j]);
+                        U[i][k] += eta * 2 * (eij * V[k][j] - lambda * U[i][k]);
+                        V[k][j] += eta * 2 * (eij * U[i][k] - lambda * V[k][j]);
                     }
                 }
             }
         }
-        // Compute convergence error
-        /*double error = this->convergenceError(P, Q, K, beta);
-        if (error < 0.01) {
-            break;
-        }*/
     }
 
-    // Display the convergence error
-    std::cout << "Convergence error: "
-              << this->convergenceError(P, Q, K, beta)
-              << std::endl;
+    // Display the MAE
+    std::cout << "Training MAE: " << this->meanAbsoluteError(U, V, K) << std::endl;
 }
 
-double Predictor::convergenceError(double **P, double **Q, size_t K, double beta) {
-    // Error initialization
+double Predictor::meanAbsoluteError(double **U, double **V, size_t K) {
     double error = 0;
 
     for (size_t i = 0; i < this->userNb; ++i) {
         for (size_t j = 0; j < this->movieNb; ++j) {
             if (this->ratings[i][j]) {
-                // error += |R - PQ|^2
                 double dotProd = 0;
                 for (size_t k = 0; k < K; ++k) {
-                    dotProd += P[i][k] * Q[k][j];
+                    dotProd += U[i][k] * V[k][j];
                 }
-                error += std::pow(this->ratings[i][j] - dotProd, 2);
-
-                // error += ||P||^2 + ||Q||^2
-                for (size_t k = 0; k < K; ++k) {
-                    error += beta / 2 * (std::pow(P[i][k], 2) + std::pow(Q[k][j], 2));
-                }
+                error += std::abs(this->ratings[i][j] - dotProd);
             }
         }
     }
 
-    // Return error value
+    // Normalization
+    error /= this->ratingNb;
+
     return error;
 }
 
-void Predictor::predictionMatrix(size_t K, double alpha, double beta, size_t steps) {
+void Predictor::predictionMatrix(size_t K, double eta, double lambda, size_t steps) {
     // Initialize P and Q
-    double **P = this->genRandomMatrix(this->userNb, K);
-    double **Q = this->genRandomMatrix(K, this->movieNb);
+    double **U = this->genRandomMatrix(this->userNb, K);
+    double **V = this->genRandomMatrix(K, this->movieNb);
 
     // Matrix factorization
-    this->matrixFactorization(P, Q, K, alpha, beta, steps);
+    this->matrixFactorization(U, V, K, eta, lambda, steps);
 
     // Initialize Predictions Matrix
     this->predictions = new double*[this->userNb];
@@ -115,7 +104,7 @@ void Predictor::predictionMatrix(size_t K, double alpha, double beta, size_t ste
         for (size_t j = 0; j < this->movieNb; ++j) {
             double dotProd = 0;
             for (size_t k = 0; k < K; ++k) {
-                dotProd += P[i][k] * Q[k][j];
+                dotProd += U[i][k] * V[k][j];
             }
             this->predictions[i][j] = dotProd;
         }
@@ -123,15 +112,15 @@ void Predictor::predictionMatrix(size_t K, double alpha, double beta, size_t ste
 
     // Free P memory
     for (size_t i = 0; i < this->userNb; ++i) {
-        delete [] P[i];
+        delete [] U[i];
     }
-    delete [] P;
+    delete [] U;
 
     // Free Q memory
     for (size_t i = 0; i < K; ++i) {
-        delete [] Q[i];
+        delete [] V[i];
     }
-    delete [] Q;
+    delete [] V;
 }
 
 double Predictor::predict(size_t user, size_t movie) {

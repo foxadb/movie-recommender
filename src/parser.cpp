@@ -43,6 +43,14 @@ std::vector<Rating*> Parser::getTestRatings() {
     return this->testRatings;
 }
 
+size_t Parser::getTrainRatingsNb() {
+    return this->trainRatings.size();
+}
+
+size_t Parser::getTestRatingsNb() {
+    return this->testRatings.size();
+}
+
 std::string Parser::toString() {
     std::string result;
 
@@ -167,9 +175,8 @@ void Parser::writeResultsFile(const char *filename, Predictor *predictor) {
     std::ofstream file(filename, std::ofstream::out | std::ofstream::trunc);
 
     // Initialize result stats
-    size_t totalResults = 0;
     size_t goodResults = 0;
-    double disparity = 0;
+    double mae = 0;
 
     // Iterate through test ratings
     for (Rating *rating: this->testRatings) {
@@ -178,14 +185,13 @@ void Parser::writeResultsFile(const char *filename, Predictor *predictor) {
         double predicted = predictor->predict(
                     rating->getUser() - 1, rating->getMovie() - 1);
 
-        // Increase counters
-        ++totalResults;
-        if (std::abs(predicted - expected) < 0.25) {
+        // Increase good result counter
+        if (std::abs(predicted - expected) < 0.5) {
             ++goodResults;
         }
 
         // Prediction disparity
-        disparity += std::abs(predicted - expected);
+        mae += std::abs(predicted - expected);
 
         // Write rating result
         std::string result = rating->toString()
@@ -198,13 +204,16 @@ void Parser::writeResultsFile(const char *filename, Predictor *predictor) {
     // Close output file
     file.close();
 
-    // Average prediction disparity
-    disparity /= totalResults;
+    // Total results number
+    size_t totalResults = this->getTestRatingsNb();
+
+    // Mean Absolute Error on prediction
+    mae /= totalResults;
 
     // Print good results ratio
     std::cout << "Total results: " << totalResults << std::endl
-              << "Good results (+- 0.25): " << goodResults
+              << "Good results (+- 0.5): " << goodResults
               << " (" << (double)(goodResults) / totalResults * 100 << " %)" << std::endl
-              << "Average disparity: " << disparity
+              << "Mean Absolute Error: " << mae
               << std::endl;
 }

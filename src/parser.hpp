@@ -15,9 +15,14 @@ public:
 
     size_t getUserNb();
     size_t getMovieNb();
+
     std::vector<Rating*> getRatings();
     std::vector<Rating*> getTrainRatings();
     std::vector<Rating*> getTestRatings();
+
+    size_t getTrainRatingsNb();
+    size_t getTestRatingsNb();
+
     std::string toString();
 
     void readCsv();
