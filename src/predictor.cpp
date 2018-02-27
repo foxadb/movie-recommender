@@ -1,5 +1,6 @@
 #include "predictor.hpp"
 
+#include <omp.h>
 #include <iostream>
 #include <cmath>
 
@@ -45,7 +46,7 @@ void Predictor::matrixFactorization(
     double newMae = 0;
 
     // Iterate until MAE converge enough
-    while (std::abs(mae - newMae) > 1e-4) {
+    while (std::abs(mae - newMae) > 1e-5) {
         mae = newMae;
         for (size_t i = 0; i < this->userNb; ++i) {
             for (size_t j = 0; j < this->movieNb; ++j) {
@@ -67,6 +68,8 @@ void Predictor::matrixFactorization(
         // Compute the new MAE
         newMae = this->meanAbsoluteError(U, V, K);
     }
+
+    std::cout << "Training MAE = " << newMae << std::endl;
 }
 
 double Predictor::meanAbsoluteError(double **U, double **V, size_t K) {
