@@ -16,7 +16,6 @@ Parser::~Parser() {
     for (Rating *rating: this->ratings) {
         delete rating;
     }
-    this->trainRatings.clear();
 
     this->ratings.clear();
     this->trainRatings.clear();
@@ -214,6 +213,27 @@ void Parser::writeResultsFile(const char *filename, Predictor *predictor) {
     std::cout << "Total results: " << totalResults << std::endl
               << "Good results (+- 0.5): " << goodResults
               << " (" << (double)(goodResults) / totalResults * 100 << " %)" << std::endl
-              << "Mean Absolute Error: " << mae
+              << "MAE: " << mae
               << std::endl;
+}
+
+double Parser::meanAbsoluteError(Predictor *predictor) {
+    // Initialize MAE
+    double mae = 0;
+
+    // Iterate through test ratings
+    for (Rating *rating: this->testRatings) {
+        // Compute prediction
+        double expected = rating->getMark();
+        double predicted = predictor->predict(
+                    rating->getUser() - 1, rating->getMovie() - 1);
+
+        // Prediction disparity
+        mae += std::abs(predicted - expected);
+    }
+
+    // Mean Absolute Error on prediction
+    mae /= this->getTestRatingsNb();
+
+    return mae;
 }

@@ -39,9 +39,14 @@ double** Predictor::genRandomMatrix(size_t n, size_t m) {
 
 void Predictor::matrixFactorization(
         double **U, double **V,
-        size_t K, double eta, double lambda, size_t steps) {
-    // Iterate throw steps
-    for (size_t step = 0; step < steps; ++step) {
+        size_t K, double eta, double lambda) {
+    // Initialize MAE
+    double mae = 1;
+    double newMae = 0;
+
+    // Iterate until MAE converge enough
+    while (std::abs(mae - newMae) > 1e-4) {
+        mae = newMae;
         for (size_t i = 0; i < this->userNb; ++i) {
             for (size_t j = 0; j < this->movieNb; ++j) {
                 if (this->ratings[i][j] > 0) {
@@ -58,10 +63,10 @@ void Predictor::matrixFactorization(
                 }
             }
         }
-    }
 
-    // Display the MAE
-    std::cout << "Training MAE: " << this->meanAbsoluteError(U, V, K) << std::endl;
+        // Compute the new MAE
+        newMae = this->meanAbsoluteError(U, V, K);
+    }
 }
 
 double Predictor::meanAbsoluteError(double **U, double **V, size_t K) {
@@ -85,13 +90,13 @@ double Predictor::meanAbsoluteError(double **U, double **V, size_t K) {
     return error;
 }
 
-void Predictor::predictionMatrix(size_t K, double eta, double lambda, size_t steps) {
+void Predictor::predictionMatrix(size_t K, double eta, double lambda) {
     // Initialize P and Q
     double **U = this->genRandomMatrix(this->userNb, K);
     double **V = this->genRandomMatrix(K, this->movieNb);
 
     // Matrix factorization
-    this->matrixFactorization(U, V, K, eta, lambda, steps);
+    this->matrixFactorization(U, V, K, eta, lambda);
 
     // Initialize Predictions Matrix
     this->predictions = new double*[this->userNb];
