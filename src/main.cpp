@@ -6,12 +6,16 @@
 #include <ctime>
 
 int main(int argc, char *argv[]) {
-    // Read arguments
     char *filename = argv[1];
     size_t K = std::atoi(argv[2]);
-    double eta = std::atof(argv[3]);
-    double lambda = std::atof(argv[4]);
-    size_t steps = std::atoi(argv[5]);
+    double eta;
+    double lambda;
+
+    // Read arguments
+    if (argc > 3) {
+        eta = std::atof(argv[3]);
+        lambda = std::atof(argv[4]);
+    }
 
     // Parser initialization
     Parser *parser = new Parser(filename, ',');
@@ -26,29 +30,60 @@ int main(int argc, char *argv[]) {
 
     // Ratings matrix
     Predictor *predictor = new Predictor(
-                            parser->ratingsMatrix(),
-                            parser->getTrainRatingsNb(),
-                            parser->getUserNb(),
-                            parser->getMovieNb()
-                            );
+                parser->ratingsMatrix(),
+                parser->getTrainRatingsNb(),
+                parser->getUserNb(),
+                parser->getMovieNb()
+                );
 
-    // Prediction matrix
-    std::cout << "====== Matrix factorization ======" << std::endl;
-    std::cout << "K = " << K
-              << ", eta = " << eta
-              << ", lambda = " << lambda
-              << std::endl;
-    std::clock_t start = clock();
-    predictor->predictionMatrix(K, eta, lambda, steps);
-    double duration = (double)(clock() - start) / CLOCKS_PER_SEC;
+    // Fully specified argument prediction matrix
+    if (argc > 3) {
+        std::cout << "====== Matrix factorization ======" << std::endl;
+        std::cout << "K = " << K
+                  << ", eta = " << eta
+                  << ", lambda = " << lambda
+                  << std::endl;
+        std::clock_t start = clock();
+        predictor->predictionMatrix(K, eta, lambda);
+        double duration = (double)(clock() - start) / CLOCKS_PER_SEC;
 
-    // Test predictions
-    std::cout << "======== Test predictions ========" << std::endl;
-    parser->writeResultsFile("results.txt", predictor);
+        // Test predictions
+        std::cout << "======== Test predictions ========" << std::endl;
+        parser->writeResultsFile("results.txt", predictor);
 
-    // Factorization duration
-    std::cout << "==================================" << std::endl;
-    std::cout << "Factorization duration: " << duration << " s" << std::endl;
+        // Factorization duration
+        std::cout << "==================================" << std::endl;
+        std::cout << "Factorization duration: " << duration << " s" << std::endl;
+
+    // Prediction matrix Cross-Validation
+    } else {
+        double etaArr[] = { 1e-4, 1e-3, 1e-2 };
+        double lambdaArr[] = { 1e-3, 1e-2, 1e-1, 1, 1e1, 1e2 };
+
+        // Mean of MAE
+        double mae = 0;
+
+        std::cout << "======== Matrix factorizations ========" << std::endl;
+        for (double eta: etaArr) {
+            for (double lambda: lambdaArr) {
+                for (int l = 0; l < 5; ++l) {
+                    // Compute prediction matrix
+                    predictor->predictionMatrix(K, eta, lambda);
+
+                    // Compute MAE
+                    mae += parser->meanAbsoluteError(predictor);
+                }
+
+                // Normalize MAE
+                mae /= 5;
+                std::cout << "K = " << K
+                          << ", eta = " << eta
+                          << ", lambda = " << lambda
+                          << ", MAE = " << mae
+                          << std::endl;
+            }
+        }
+    }
 
     // Free memory
     delete parser;

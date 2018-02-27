@@ -13,11 +13,11 @@ public:
 
     void matrixFactorization(
             double **U, double **V,
-            size_t K, double eta, double lambda, size_t steps);
+            size_t K, double eta, double lambda);
 
     double meanAbsoluteError(double **U, double **V, size_t K);
 
-    void predictionMatrix(size_t K, double eta, double lambda, size_t steps);
+    void predictionMatrix(size_t K, double eta, double lambda);
 
     double predict(size_t user, size_t movie);
 
