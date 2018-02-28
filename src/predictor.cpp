@@ -42,12 +42,12 @@ void Predictor::matrixFactorization(
         double **U, double **V,
         size_t K, double eta, double lambda) {
     // Initialize MAE
-    double mae = 1;
-    double newMae = 0;
+    double mae = -1;
+    double oldMae[5] = { 0, 0, 0, 0, 0 };
 
     // Iterate until MAE converge enough
-    while (std::abs(mae - newMae) > 1e-5) {
-        mae = newMae;
+    while (!this->convergeEnough(5e-4, mae, oldMae, 5)) {
+#pragma omp parallel for
         for (size_t i = 0; i < this->userNb; ++i) {
             for (size_t j = 0; j < this->movieNb; ++j) {
                 if (this->ratings[i][j] > 0) {
@@ -66,10 +66,35 @@ void Predictor::matrixFactorization(
         }
 
         // Compute the new MAE
-        newMae = this->meanAbsoluteError(U, V, K);
+        mae = this->meanAbsoluteError(U, V, K);
+    }
+}
+
+bool Predictor::convergeEnough(double tolerance, double mae, double *oldMae, int size) {
+    // Avoid NAN
+    if (mae != mae) {
+        return true;
     }
 
-    std::cout << "Training MAE = " << newMae << std::endl;
+    // Avoid divergence
+    if (mae > oldMae[0] && oldMae[0] > 0) {
+        return true;
+    }
+
+    double diff = 0;
+    for (int i = 0; i < size; ++i) {
+        diff += std::abs(oldMae[i] - mae);
+    }
+
+    if (diff < tolerance) {
+        return true;
+    } else {
+        for (int i = size - 1; i > 0; --i) {
+            oldMae[i] = oldMae[i-1];
+        }
+        oldMae[0] = mae;
+        return false;
+    }
 }
 
 double Predictor::meanAbsoluteError(double **U, double **V, size_t K) {
@@ -133,4 +158,21 @@ void Predictor::predictionMatrix(size_t K, double eta, double lambda) {
 
 double Predictor::predict(size_t user, size_t movie) {
     return this->predictions[user][movie];
+}
+
+double Predictor::trainingMeanAbsoluteError() {
+    double error = 0;
+
+    for (size_t i = 0; i < this->userNb; ++i) {
+        for (size_t j = 0; j < this->movieNb; ++j) {
+            if (this->ratings[i][j]) {
+                error += std::abs(this->ratings[i][j] - this->predictions[i][j]);
+            }
+        }
+    }
+
+    // Normalization
+    error /= this->ratingNb;
+
+    return error;
 }

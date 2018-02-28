@@ -47,6 +47,11 @@ int main(int argc, char *argv[]) {
         predictor->predictionMatrix(K, eta, lambda);
         double duration = (double)(clock() - start) / CLOCKS_PER_SEC;
 
+        // Training MAE
+        std::cout << "Training MAE = "
+                  << predictor->trainingMeanAbsoluteError()
+                  << std::endl;
+
         // Test predictions
         std::cout << "======== Test predictions ========" << std::endl;
         parser->writeResultsFile("results.txt", predictor);
@@ -63,10 +68,10 @@ int main(int argc, char *argv[]) {
         // Mean of MAE
         double mae = 0;
 
-        std::cout << "======== Matrix factorizations ========" << std::endl;
+        std::cout << "======== Matrix factorization cross-validation ========" << std::endl;
         for (double eta: etaArr) {
             for (double lambda: lambdaArr) {
-                for (int l = 0; l < 5; ++l) {
+                for (int l = 0; l < 3; ++l) {
                     // Compute prediction matrix
                     predictor->predictionMatrix(K, eta, lambda);
 
@@ -75,11 +80,12 @@ int main(int argc, char *argv[]) {
                 }
 
                 // Normalize MAE
-                mae /= 5;
+                mae /= 3;
                 std::cout << "K = " << K
                           << ", eta = " << eta
                           << ", lambda = " << lambda
-                          << ", MAE = " << mae
+                          << ", Train MAE = " << predictor->trainingMeanAbsoluteError()
+                          << ", Test MAE = " << mae
                           << std::endl;
             }
         }

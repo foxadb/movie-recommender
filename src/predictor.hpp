@@ -17,9 +17,13 @@ public:
 
     double meanAbsoluteError(double **U, double **V, size_t K);
 
+    bool convergeEnough(double tolerance, double mae, double *oldMae, int size);
+
     void predictionMatrix(size_t K, double eta, double lambda);
 
     double predict(size_t user, size_t movie);
+
+    double trainingMeanAbsoluteError();
 
 private:
     double** ratings;
