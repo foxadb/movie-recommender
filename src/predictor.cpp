@@ -43,11 +43,10 @@ void Predictor::matrixFactorization(
         size_t K, double eta, double lambda) {
     // Initialize MAE
     double mae = -1;
-    double oldMae[5] = { 0, 0, 0, 0, 0 };
+    double oldMae[3] = { 0, 0, 0 };
 
     // Iterate until MAE converge enough
-    while (!this->convergeEnough(5e-4, mae, oldMae, 5)) {
-#pragma omp parallel for
+    while (!this->convergeEnough(5e-4, mae, oldMae, 3)) {
         for (size_t i = 0; i < this->userNb; ++i) {
             for (size_t j = 0; j < this->movieNb; ++j) {
                 if (this->ratings[i][j] > 0) {
@@ -55,8 +54,11 @@ void Predictor::matrixFactorization(
                     for (size_t k = 0; k < K; ++k) {
                         dotProd += U[i][k] * V[k][j];
                     }
+
+                    // ij term error
                     double eij = this->ratings[i][j] - dotProd;
 
+                    // Stochastic gradient descent iteration
                     for (size_t k = 0; k < K; ++k) {
                         U[i][k] += eta * 2 * (eij * V[k][j] - lambda * U[i][k]);
                         V[k][j] += eta * 2 * (eij * U[i][k] - lambda * V[k][j]);
