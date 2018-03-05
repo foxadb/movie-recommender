@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
 
     // Split train test ratings
     std::cout << "Split training/testing datasets" << std::endl;
-    parser->splitTrainTestRatings(0.8);
+    parser->splitTrainTestRatings(0.8, 0);
 
     // Ratings matrix
     Predictor *predictor = new Predictor(parser->getTrainRatings(),
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
 
     // Prediction matrix Cross-Validation
     } else {
-        double etaArr[] = { 1e-5, 1e-4, 1e-3, 1e-2 };
+        double etaArr[] = { 1e-4, 1e-3, 1e-2 };
         double lambdaArr[] = { 1e-3, 1e-2, 1e-1, 1, 1e1, 1e2, 1e3 };
 
         // Mean of MAE
@@ -75,7 +75,10 @@ int main(int argc, char *argv[]) {
                 // Reset MAE
                 mae = 0;
 
-                for (int l = 0; l < 1; ++l) {
+                for (int l = 0; l < 5; ++l) {
+                    // Pick next test set
+                    parser->splitTrainTestRatings(0.8, l);
+
                     // Compute prediction matrix
                     predictor->predictionMatrix(K, eta, lambda);
 
@@ -84,7 +87,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 // Normalize MAE
-                mae /= 1;
+                mae /= 5;
                 std::cout << "K = " << K
                           << ", eta = " << eta
                           << ", lambda = " << lambda

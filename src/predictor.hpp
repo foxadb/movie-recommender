@@ -17,10 +17,10 @@ public:
     double** genRandomMatrix(size_t n, size_t m);
 
     void matrixFactorization(
-            double **U, double **V,
+            double **U, double **M,
             size_t K, double eta, double lambda);
 
-    double meanAbsoluteError(double **U, double **V, size_t K);
+    double meanAbsoluteError(double **U, double **M, size_t K);
 
     bool convergeEnough(double tolerance, double mae, double *oldMae, int size);
 

@@ -115,7 +115,7 @@ void Parser::readCsv() {
     file.close();
 }
 
-void Parser::splitTrainTestRatings(double ratio) {
+void Parser::splitTrainTestRatings(double ratio, int slice) {
     // Count ratings per user
     size_t *userRatingsNb = new size_t[this->userNb]();
     for (Rating *rating: this->ratings) {
@@ -127,23 +127,28 @@ void Parser::splitTrainTestRatings(double ratio) {
     this->testRatings.clear();
 
     // Current user id
-    size_t currentUser = 1;
+    size_t currentUser = 0;
 
     // Rating per user counter
     size_t ratingCounter = 0;
 
     for (Rating *rating: this->ratings) {
+        // Slice bound
+        int sliceBound;
+
         // Next user id
         if (currentUser < rating->getUser()) {
+            sliceBound = std::round(userRatingsNb[currentUser] * (1 - ratio));
             ++currentUser;
             ratingCounter = 0;
         }
 
         // Split between training and testing datasets
-        if (ratingCounter < userRatingsNb[currentUser - 1] * ratio) {
-            this->trainRatings.push_back(rating);
-        } else {
+        if (ratingCounter >= slice * sliceBound
+                && ratingCounter < (slice + 1) * sliceBound) {
             this->testRatings.push_back(rating);
+        } else {
+            this->trainRatings.push_back(rating);
         }
 
         // Increase rating per user counter

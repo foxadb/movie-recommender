@@ -26,7 +26,7 @@ public:
     std::string toString();
 
     void readCsv();
-    void splitTrainTestRatings(double ratio);
+    void splitTrainTestRatings(double ratio, int slice);
     double** ratingsMatrix();
 
     void writeResultsFile(const char *filename, Predictor *predictor);
