@@ -99,12 +99,12 @@ void Parser::readCsv() {
 
         // Compute max user id
         if (this->userNb < rating->getUser()) {
-            ++this->userNb;
+            this->userNb = rating->getUser();
         }
 
         // Compute max movie id
         if (this->movieNb < rating->getMovie()) {
-            ++this->movieNb;
+            this->movieNb = rating->getMovie();
         }
 
         // Push rating to data
@@ -151,7 +151,7 @@ void Parser::splitTrainTestRatings(double ratio) {
     }
 
     // Free memory
-    delete userRatingsNb;
+    delete [] userRatingsNb;
 }
 
 double** Parser::ratingsMatrix() {
@@ -173,24 +173,12 @@ void Parser::writeResultsFile(const char *filename, Predictor *predictor) {
     // Open output file
     std::ofstream file(filename, std::ofstream::out | std::ofstream::trunc);
 
-    // Initialize result stats
-    size_t goodResults = 0;
-    double mae = 0;
-
     // Iterate through test ratings
     for (Rating *rating: this->testRatings) {
         // Compute prediction
         double expected = rating->getMark();
         double predicted = predictor->predict(
                     rating->getUser() - 1, rating->getMovie() - 1);
-
-        // Increase good result counter
-        if (std::abs(predicted - expected) < 0.5) {
-            ++goodResults;
-        }
-
-        // Prediction disparity
-        mae += std::abs(predicted - expected);
 
         // Write rating result
         std::string result = rating->toString()
@@ -202,38 +190,4 @@ void Parser::writeResultsFile(const char *filename, Predictor *predictor) {
 
     // Close output file
     file.close();
-
-    // Total results number
-    size_t totalResults = this->getTestRatingsNb();
-
-    // Mean Absolute Error on prediction
-    mae /= totalResults;
-
-    // Print good results ratio
-    std::cout << "Total results: " << totalResults << std::endl
-              << "Good results (+- 0.5): " << goodResults
-              << " (" << (double)(goodResults) / totalResults * 100 << " %)" << std::endl
-              << "MAE: " << mae
-              << std::endl;
-}
-
-double Parser::meanAbsoluteError(Predictor *predictor) {
-    // Initialize MAE
-    double mae = 0;
-
-    // Iterate through test ratings
-    for (Rating *rating: this->testRatings) {
-        // Compute prediction
-        double expected = rating->getMark();
-        double predicted = predictor->predict(
-                    rating->getUser() - 1, rating->getMovie() - 1);
-
-        // Prediction disparity
-        mae += std::abs(predicted - expected);
-    }
-
-    // Mean Absolute Error on prediction
-    mae /= this->getTestRatingsNb();
-
-    return mae;
 }

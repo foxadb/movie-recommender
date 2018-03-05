@@ -31,8 +31,6 @@ public:
 
     void writeResultsFile(const char *filename, Predictor *predictor);
 
-    double meanAbsoluteError(Predictor *predictor);
-
 private:
     char *filename;
     char delimiter;

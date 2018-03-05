@@ -4,19 +4,25 @@
 #include <iostream>
 #include <cmath>
 
-Predictor::Predictor(double **ratings, size_t ratingNb, size_t userNb, size_t movieNb) {
-    this->ratings = ratings;
-    this->ratingNb = ratingNb;
+Predictor::Predictor(const std::vector<Rating *>& training,
+                     const std::vector<Rating *>& testing,
+                     size_t userNb, size_t movieNb) {
+    this->training = training;
+    this->testing = testing;
     this->userNb = userNb;
     this->movieNb = movieNb;
+
+    // Prediction matrix allocation
+    this->predictions = new double*[this->userNb];
+    for (size_t i = 0; i < this->userNb; ++i) {
+        this->predictions[i] = new double[this->movieNb];
+    }
 }
 
 Predictor::~Predictor() {
     for (int i = 0; i < this->userNb; ++i) {
-        delete [] this->ratings[i];
         delete [] this->predictions[i];
     }
-    delete [] this->ratings;
     delete [] this->predictions;
 }
 
@@ -45,30 +51,36 @@ void Predictor::matrixFactorization(
     double mae = -1;
     double oldMae[3] = { 0, 0, 0 };
 
+    // Iteration counter
+    //size_t iteration = 0;
+
     // Iterate until MAE converge enough
-    while (!this->convergeEnough(5e-4, mae, oldMae, 3)) {
-        for (size_t i = 0; i < this->userNb; ++i) {
-            for (size_t j = 0; j < this->movieNb; ++j) {
-                if (this->ratings[i][j] > 0) {
-                    double dotProd = 0;
-                    for (size_t k = 0; k < K; ++k) {
-                        dotProd += U[i][k] * V[k][j];
-                    }
+    while (!this->convergeEnough(1e-5, mae, oldMae, 3)) {
+        for (Rating* rating: this->training) {
+            size_t i = rating->getUser() - 1;
+            size_t j = rating->getMovie() - 1;
 
-                    // ij term error
-                    double eij = this->ratings[i][j] - dotProd;
+            double dotProd = 0;
+            for (size_t k = 0; k < K; ++k) {
+                dotProd += U[i][k] * V[k][j];
+            }
 
-                    // Stochastic gradient descent iteration
-                    for (size_t k = 0; k < K; ++k) {
-                        U[i][k] += eta * 2 * (eij * V[k][j] - lambda * U[i][k]);
-                        V[k][j] += eta * 2 * (eij * U[i][k] - lambda * V[k][j]);
-                    }
-                }
+            // ij term error
+            double error = rating->getMark() - dotProd;
+
+            // Stochastic gradient descent iteration
+            for (size_t k = 0; k < K; ++k) {
+                U[i][k] += eta * 2 * (error * V[k][j] - lambda * U[i][k]);
+                V[k][j] += eta * 2 * (error * U[i][k] - lambda * V[k][j]);
             }
         }
 
         // Compute the new MAE
         mae = this->meanAbsoluteError(U, V, K);
+        //std::cout << "it: " << iteration << " mae: " << mae << std::endl;
+
+        // Increase iteration counter
+        //++iteration;
     }
 }
 
@@ -102,37 +114,30 @@ bool Predictor::convergeEnough(double tolerance, double mae, double *oldMae, int
 double Predictor::meanAbsoluteError(double **U, double **V, size_t K) {
     double error = 0;
 
-    for (size_t i = 0; i < this->userNb; ++i) {
-        for (size_t j = 0; j < this->movieNb; ++j) {
-            if (this->ratings[i][j]) {
-                double dotProd = 0;
-                for (size_t k = 0; k < K; ++k) {
-                    dotProd += U[i][k] * V[k][j];
-                }
-                error += std::abs(this->ratings[i][j] - dotProd);
-            }
+    for (Rating* rating: this->testing) {
+        size_t i = rating->getUser() - 1;
+        size_t j = rating->getMovie() - 1;
+
+        double dotProd = 0;
+        for (size_t k = 0; k < K; ++k) {
+            dotProd += U[i][k] * V[k][j];
         }
+        error += std::abs(rating->getMark() - dotProd);
     }
 
     // Normalization
-    error /= this->ratingNb;
+    error /= this->testing.size();
 
     return error;
 }
 
 void Predictor::predictionMatrix(size_t K, double eta, double lambda) {
-    // Initialize P and Q
+    // Initialize U and V
     double **U = this->genRandomMatrix(this->userNb, K);
     double **V = this->genRandomMatrix(K, this->movieNb);
 
     // Matrix factorization
     this->matrixFactorization(U, V, K, eta, lambda);
-
-    // Initialize Predictions Matrix
-    this->predictions = new double*[this->userNb];
-    for (size_t i = 0; i < this->userNb; ++i) {
-        this->predictions[i] = new double[this->movieNb];
-    }
 
     // Compute predictions
     for (size_t i = 0; i < this->userNb; ++i) {
@@ -145,13 +150,13 @@ void Predictor::predictionMatrix(size_t K, double eta, double lambda) {
         }
     }
 
-    // Free P memory
+    // Free U memory
     for (size_t i = 0; i < this->userNb; ++i) {
         delete [] U[i];
     }
     delete [] U;
 
-    // Free Q memory
+    // Free V memory
     for (size_t i = 0; i < K; ++i) {
         delete [] V[i];
     }
@@ -165,16 +170,29 @@ double Predictor::predict(size_t user, size_t movie) {
 double Predictor::trainingMeanAbsoluteError() {
     double error = 0;
 
-    for (size_t i = 0; i < this->userNb; ++i) {
-        for (size_t j = 0; j < this->movieNb; ++j) {
-            if (this->ratings[i][j]) {
-                error += std::abs(this->ratings[i][j] - this->predictions[i][j]);
-            }
-        }
+    for (Rating *rating: this->training) {
+        size_t i = rating->getUser() - 1;
+        size_t j = rating->getMovie() - 1;
+        error += std::abs(rating->getMark() - this->predictions[i][j]);
     }
 
     // Normalization
-    error /= this->ratingNb;
+    error /= this->training.size();
+
+    return error;
+}
+
+double Predictor::testingMeanAbsoluteError() {
+    double error = 0;
+
+    for (Rating *rating: this->testing) {
+        size_t i = rating->getUser() - 1;
+        size_t j = rating->getMovie() - 1;
+        error += std::abs(rating->getMark() - this->predictions[i][j]);
+    }
+
+    // Normalization
+    error /= this->testing.size();
 
     return error;
 }

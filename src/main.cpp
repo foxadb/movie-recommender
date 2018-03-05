@@ -29,12 +29,10 @@ int main(int argc, char *argv[]) {
     parser->splitTrainTestRatings(0.8);
 
     // Ratings matrix
-    Predictor *predictor = new Predictor(
-                parser->ratingsMatrix(),
-                parser->getTrainRatingsNb(),
-                parser->getUserNb(),
-                parser->getMovieNb()
-                );
+    Predictor *predictor = new Predictor(parser->getTrainRatings(),
+                                         parser->getTestRatings(),
+                                         parser->getUserNb(),
+                                         parser->getMovieNb());
 
     // Fully specified argument prediction matrix
     if (argc > 3) {
@@ -52,35 +50,41 @@ int main(int argc, char *argv[]) {
                   << predictor->trainingMeanAbsoluteError()
                   << std::endl;
 
-        // Test predictions
-        std::cout << "======== Test predictions ========" << std::endl;
+        // Testing MAE
+        std::cout << "Testing MAE = "
+                  << predictor->testingMeanAbsoluteError()
+                  << std::endl;
+
+        // Write results into text file
         parser->writeResultsFile("results.txt", predictor);
 
         // Factorization duration
-        std::cout << "==================================" << std::endl;
         std::cout << "Factorization duration: " << duration << " s" << std::endl;
 
     // Prediction matrix Cross-Validation
     } else {
-        double etaArr[] = { 1e-4, 1e-3, 1e-2 };
-        double lambdaArr[] = { 1e-3, 1e-2, 1e-1, 1, 1e1, 1e2 };
+        double etaArr[] = { 1e-5, 1e-4, 1e-3, 1e-2 };
+        double lambdaArr[] = { 1e-3, 1e-2, 1e-1, 1, 1e1, 1e2, 1e3 };
 
         // Mean of MAE
-        double mae = 0;
+        double mae;
 
         std::cout << "======== Matrix factorization cross-validation ========" << std::endl;
         for (double eta: etaArr) {
             for (double lambda: lambdaArr) {
-                for (int l = 0; l < 3; ++l) {
+                // Reset MAE
+                mae = 0;
+
+                for (int l = 0; l < 1; ++l) {
                     // Compute prediction matrix
                     predictor->predictionMatrix(K, eta, lambda);
 
                     // Compute MAE
-                    mae += parser->meanAbsoluteError(predictor);
+                    mae += predictor->testingMeanAbsoluteError();
                 }
 
                 // Normalize MAE
-                mae /= 3;
+                mae /= 1;
                 std::cout << "K = " << K
                           << ", eta = " << eta
                           << ", lambda = " << lambda

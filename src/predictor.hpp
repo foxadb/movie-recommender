@@ -1,12 +1,17 @@
 #ifndef PREDICTOR_HPP
 #define PREDICTOR_HPP
 
+#include "rating.hpp"
+
 #include <iostream>
+#include <vector>
 
 class Predictor {
 
 public:
-    Predictor(double** ratings, size_t ratingNb, size_t userNb, size_t movieNb);
+    Predictor(const std::vector<Rating*>& training,
+              const std::vector<Rating*>& testing,
+              size_t userNb, size_t movieNb);
     ~Predictor();
 
     double** genRandomMatrix(size_t n, size_t m);
@@ -25,6 +30,8 @@ public:
 
     double trainingMeanAbsoluteError();
 
+    double testingMeanAbsoluteError();
+
 private:
     double** ratings;
     double** predictions;
@@ -32,6 +39,9 @@ private:
     size_t ratingNb;
     size_t userNb;
     size_t movieNb;
+
+    std::vector<Rating*> training;
+    std::vector<Rating*> testing;
 };
 
 #endif
