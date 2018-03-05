@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
 
     // Split train test ratings
     std::cout << "Split training/testing datasets" << std::endl;
-    parser->splitTrainTestRatings(0.8, 0);
+    parser->splitTrainTestRatings(0.8, 3);
 
     // Ratings matrix
     Predictor *predictor = new Predictor(parser->getTrainRatings(),

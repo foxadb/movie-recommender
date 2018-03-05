@@ -67,8 +67,8 @@ void Predictor::matrixFactorization(
 
             // Stochastic gradient descent iteration
             for (size_t k = 0; k < K; ++k) {
-                U[i][k] += eta * 2 * (error * M[k][j] - lambda * U[i][k]);
-                M[k][j] += eta * 2 * (error * U[i][k] - lambda * M[k][j]);
+                U[i][k] += eta * (error * M[k][j] - lambda * U[i][k]);
+                M[k][j] += eta * (error * U[i][k] - lambda * M[k][j]);
             }
         }
 
