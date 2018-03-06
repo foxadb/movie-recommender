@@ -12,19 +12,21 @@ public:
     Predictor(const std::vector<Rating*>& training,
               const std::vector<Rating*>& testing,
               size_t userNb, size_t movieNb);
+
     ~Predictor();
 
     double** genRandomMatrix(size_t n, size_t m);
 
     void matrixFactorization(
             double **U, double **M,
-            size_t K, double eta, double lambda);
+            size_t K, double eta, double lambda,
+            size_t iterations);
 
     double meanAbsoluteError(double **U, double **M, size_t K);
 
     bool convergeEnough(double tolerance, double mae, double *oldMae, int size);
 
-    void predictionMatrix(size_t K, double eta, double lambda);
+    void predictionMatrix(size_t K, double eta, double lambda, size_t iterations);
 
     double predict(size_t user, size_t movie);
 

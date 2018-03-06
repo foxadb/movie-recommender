@@ -10,11 +10,17 @@ int main(int argc, char *argv[]) {
     size_t K = std::atoi(argv[2]);
     double eta;
     double lambda;
+    size_t iterations = 0;
 
     // Read arguments
     if (argc > 3) {
         eta = std::atof(argv[3]);
         lambda = std::atof(argv[4]);
+    }
+
+    // Read optional iterations argument
+    if (argc == 6) {
+        iterations = std::atoi(argv[5]);
     }
 
     // Parser initialization
@@ -42,7 +48,7 @@ int main(int argc, char *argv[]) {
                   << ", lambda = " << lambda
                   << std::endl;
         std::clock_t start = clock();
-        predictor->predictionMatrix(K, eta, lambda);
+        predictor->predictionMatrix(K, eta, lambda, iterations);
         double duration = (double)(clock() - start) / CLOCKS_PER_SEC;
 
         // Training MAE
@@ -80,7 +86,7 @@ int main(int argc, char *argv[]) {
                     parser->splitTrainTestRatings(0.8, l);
 
                     // Compute prediction matrix
-                    predictor->predictionMatrix(K, eta, lambda);
+                    predictor->predictionMatrix(K, eta, lambda, 0);
 
                     // Compute MAE
                     mae += predictor->testingMeanAbsoluteError();

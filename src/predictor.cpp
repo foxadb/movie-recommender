@@ -46,34 +46,61 @@ double** Predictor::genRandomMatrix(size_t n, size_t m) {
 
 void Predictor::matrixFactorization(
         double **U, double **M,
-        size_t K, double eta, double lambda) {
+        size_t K, double eta, double lambda,
+        size_t iterations) {
     // Initialize MAE
     double mae = -1;
     double oldMae[3] = { 0, 0, 0 };
 
-    // Iterate until MAE converge enough
-    while (!this->convergeEnough(1e-5, mae, oldMae, 3)) {
-        for (Rating* rating: this->training) {
-            size_t i = rating->getUser() - 1;
-            size_t j = rating->getMovie() - 1;
+    if (iterations == 0) {
+        // Iterate until MAE converge enough
+        while (!this->convergeEnough(1e-5, mae, oldMae, 3)) {
+            for (Rating* rating: this->training) {
+                size_t i = rating->getUser() - 1;
+                size_t j = rating->getMovie() - 1;
 
-            double dotProd = 0;
-            for (size_t k = 0; k < K; ++k) {
-                dotProd += U[i][k] * M[k][j];
+                // Matrix product
+                double dotProd = 0;
+                for (size_t k = 0; k < K; ++k) {
+                    dotProd += U[i][k] * M[k][j];
+                }
+
+                // ij term error
+                double error = rating->getMark() - dotProd;
+
+                // Stochastic gradient descent iteration
+                for (size_t k = 0; k < K; ++k) {
+                    U[i][k] += eta * (error * M[k][j] - lambda * U[i][k]);
+                    M[k][j] += eta * (error * U[i][k] - lambda * M[k][j]);
+                }
             }
 
-            // ij term error
-            double error = rating->getMark() - dotProd;
+            // Compute the new MAE
+            mae = this->meanAbsoluteError(U, M, K);
+        }
+    } else {
+        // Iterate a specified amount
+        for (size_t iteration = 0; iteration < iterations; ++iteration) {
+            for (Rating* rating: this->training) {
+                size_t i = rating->getUser() - 1;
+                size_t j = rating->getMovie() - 1;
 
-            // Stochastic gradient descent iteration
-            for (size_t k = 0; k < K; ++k) {
-                U[i][k] += eta * (error * M[k][j] - lambda * U[i][k]);
-                M[k][j] += eta * (error * U[i][k] - lambda * M[k][j]);
+                // Matrix product
+                double dotProd = 0;
+                for (size_t k = 0; k < K; ++k) {
+                    dotProd += U[i][k] * M[k][j];
+                }
+
+                // ij term error
+                double error = rating->getMark() - dotProd;
+
+                // Stochastic gradient descent iteration
+                for (size_t k = 0; k < K; ++k) {
+                    U[i][k] += eta * (error * M[k][j] - lambda * U[i][k]);
+                    M[k][j] += eta * (error * U[i][k] - lambda * M[k][j]);
+                }
             }
         }
-
-        // Compute the new MAE
-        mae = this->meanAbsoluteError(U, M, K);
     }
 }
 
@@ -124,13 +151,13 @@ double Predictor::meanAbsoluteError(double **U, double **M, size_t K) {
     return error;
 }
 
-void Predictor::predictionMatrix(size_t K, double eta, double lambda) {
+void Predictor::predictionMatrix(size_t K, double eta, double lambda, size_t iterations) {
     // Initialize User and Movie matrix
     double **U = this->genRandomMatrix(this->userNb, K);
     double **M = this->genRandomMatrix(K, this->movieNb);
 
     // Matrix factorization
-    this->matrixFactorization(U, M, K, eta, lambda);
+    this->matrixFactorization(U, M, K, eta, lambda, iterations);
 
     // Compute predictions
     for (size_t i = 0; i < this->userNb; ++i) {

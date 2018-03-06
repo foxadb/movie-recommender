@@ -23,13 +23,22 @@ make
 
 ### Run
 
+#### Command line
+
+```
+./src/recommender csvfile k eta lambda [iteration number]
+```
+
+#### Example
+
 Run the recommender on the ratings dataset:
 ```
-./src/recommender ../data/ratings.csv 2 0.0002 0.02 5000
+./src/recommender ../data/ratings.csv 2 0.001 0.01
 ```
 
 For fast test use ``small.csv`` file:
 ```
-./src/recommender ../data/small.csv 2 0.0002 0.02 5000000
+./src/recommender ../data/small.csv 2 0.04 0.0001 100000
 ```
 
+Results are written into the ``results.txt`` text file.
